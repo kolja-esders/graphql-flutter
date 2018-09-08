@@ -190,6 +190,12 @@ class WatchQueryOptions extends BaseOptions {
     Map<String, dynamic> a,
     Map<String, dynamic> b,
   ) {
+    if (a == null && b == null) {
+      return true;
+    }
+    if (a == null || b == null) {
+      return false;
+    }
     if (a.length != b.length) {
       return true;
     }
