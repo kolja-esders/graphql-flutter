@@ -10,11 +10,8 @@ void main() => runApp(MyApp());
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final HttpLink link = HttpLink(
-      uri: 'https://api.github.com/graphql',
-      headers: <String, String>{
-        'Authorization': 'Bearer <YOUR_PERSONAL_ACCESS_TOKEN>',
-      },
+    HttpLink link = HttpLink(
+      uri: 'http://kolja.es:4000'
     );
 
     final ValueNotifier<GraphQLClient> client = ValueNotifier<GraphQLClient>(
@@ -23,6 +20,22 @@ class MyApp extends StatelessWidget {
         link: link,
       ),
     );
+
+    String email = 'kolja@gmail.com';
+    String password = 'xxy';
+    final test = {'email': email, 'password': password};
+    client.value.mutate(MutationOptions(
+        document: queries.logIn,
+        variables: test
+      // you can optionally override some http options through the contexts
+    )).then((res) {
+      if (res.loading) {
+        return null;
+      }
+      dynamic y = res.errors;
+      dynamic x = res.data;
+
+    });
 
     return GraphQLProvider(
       client: client,
@@ -54,87 +67,30 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
+    String email = 'kolja@gmail.com';
+    String password = 'xxy';
+    final test = {'email': email, 'password': password};
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
       ),
-      body: Query(
-        options: QueryOptions(
-          document: queries.readRepositories,
-          pollInterval: 4,
+      body: Mutation(
+        options: MutationOptions(
+          document: queries.logIn,
+          variables: test
           // you can optionally override some http options through the contexts
-          context: <String, dynamic>{
-            'headers': <String, String>{
-              'Authorization': 'Bearer <YOUR_PERSONAL_ACCESS_TOKEN>',
-            },
-          },
         ),
-        builder: (QueryResult result) {
-          if (result.errors != null) {
-            return Text(result.errors.toString());
-          }
+        builder: (RunMutation run, QueryResult result) {
+          final dynamic lol = result.errors;
 
           if (result.loading) {
             return const Text('Loading');
           }
 
-          // result.data can be either a Map or a List
-          final List<dynamic> repositories =
-              result.data['viewer']['repositories']['nodes'];
+          dynamic ok = result.data;
 
-          return ListView.builder(
-            itemCount: repositories.length,
-            itemBuilder: (BuildContext context, int index) {
-              final Map<String, dynamic> repository = repositories[index];
-
-              return Mutation(
-                options: MutationOptions(
-                  document: mutations.addStar,
-                ),
-                builder: (
-                  RunMutation addStar,
-                  QueryResult addStarResult,
-                ) {
-                  if (addStarResult.data != null &&
-                      addStarResult.data.isNotEmpty) {
-                    repository['viewerHasStarred'] = addStarResult
-                        .data['addStar']['starrable']['viewerHasStarred'];
-                  }
-
-                  return ListTile(
-                    leading: repository['viewerHasStarred']
-                        ? const Icon(Icons.star, color: Colors.amber)
-                        : const Icon(Icons.star_border),
-                    title: Text(repository['name']),
-                    // optimistic ui updates are not implemented yet, therefore changes may take some time to show
-                    onTap: () {
-                      addStar(<String, dynamic>{
-                        'starrableId': repository['id'],
-                      });
-                    },
-                  );
-                },
-                onCompleted: (QueryResult onCompleteResult) {
-                  showDialog<AlertDialog>(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return AlertDialog(
-                        title: const Text('Thanks for your star!'),
-                        actions: <Widget>[
-                          SimpleDialogOption(
-                            child: const Text('Dismiss'),
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                            },
-                          )
-                        ],
-                      );
-                    },
-                  );
-                },
-              );
-            },
-          );
+          return Container();
         },
       ),
     );

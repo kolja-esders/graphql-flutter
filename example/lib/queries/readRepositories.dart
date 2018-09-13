@@ -1,14 +1,13 @@
-final String readRepositories = '''
-  query ReadRepositories {
-    viewer {
-      repositories(last: 50) {
-        nodes {
-          id
-          name
-          viewerHasStarred
-        }
-      }
+String logIn = """
+mutation LogInMutation(\$email: String!, \$password: String!) {
+  login(email: \$email, password: \$password) {
+    token
+    user {
+      id
+      email
+      firstName
+      lastName
     }
   }
-'''
-    .replaceAll('\n', ' ');
+}
+""".replaceAll('\n', ' ');
