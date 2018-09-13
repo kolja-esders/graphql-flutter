@@ -11,18 +11,31 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     HttpLink link = HttpLink(
-      uri: 'https://api.github.com/graphql',
-      headers: <String, String>{
-        'Authorization': 'Bearer <YOUR_PERSONAL_ACCESS_TOKEN>',
-      },
+      uri: 'http://kolja.es:4000'
     );
 
-    ValueNotifier<GraphQLClient> client = ValueNotifier(
+    final ValueNotifier<GraphQLClient> client = ValueNotifier<GraphQLClient>(
       GraphQLClient(
         cache: InMemoryCache(),
         link: link,
       ),
     );
+
+    String email = 'kolja@gmail.com';
+    String password = 'xxy';
+    final test = {'email': email, 'password': password};
+    client.value.mutate(MutationOptions(
+        document: queries.logIn,
+        variables: test
+      // you can optionally override some http options through the contexts
+    )).then((res) {
+      if (res.loading) {
+        return null;
+      }
+      dynamic y = res.errors;
+      dynamic x = res.data;
+
+    });
 
     return GraphQLProvider(
       client: client,
@@ -32,7 +45,7 @@ class MyApp extends StatelessWidget {
           theme: ThemeData(
             primarySwatch: Colors.blue,
           ),
-          home: MyHomePage(title: 'GraphQL Flutter Home Page'),
+          home: const MyHomePage(title: 'GraphQL Flutter Home Page'),
         ),
       ),
     );
@@ -40,7 +53,7 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({
+  const MyHomePage({
     Key key,
     this.title,
   }) : super(key: key);
@@ -54,86 +67,30 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
+    String email = 'kolja@gmail.com';
+    String password = 'xxy';
+    final test = {'email': email, 'password': password};
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
       ),
-      body: Query(
-        options: QueryOptions(
-          document: queries.readRepositories,
-          pollInterval: 4,
+      body: Mutation(
+        options: MutationOptions(
+          document: queries.logIn,
+          variables: test
           // you can optionally override some http options through the contexts
-          context: <String, dynamic>{
-            'headers': <String, String>{
-              'Authorization': 'Bearer <YOUR_PERSONAL_ACCESS_TOKEN>',
-            },
-          },
         ),
-        builder: (QueryResult result) {
-          if (result.errors != null) {
-            return Text(result.errors.toString());
-          }
+        builder: (RunMutation run, QueryResult result) {
+          final dynamic lol = result.errors;
 
           if (result.loading) {
-            return Text('Loading');
+            return const Text('Loading');
           }
 
-          // result.data can be either a Map or a List
-          List repositories = result.data['viewer']['repositories']['nodes'];
+          dynamic ok = result.data;
 
-          return ListView.builder(
-            itemCount: repositories.length,
-            itemBuilder: (context, index) {
-              final Map<String, dynamic> repository = repositories[index];
-
-              return Mutation(
-                options: MutationOptions(
-                  document: mutations.addStar,
-                ),
-                builder: (
-                  RunMutation addStar,
-                  QueryResult addStarResult,
-                ) {
-                  if (addStarResult.data != null &&
-                      (addStarResult.data as Map).isNotEmpty) {
-                    repository['viewerHasStarred'] = addStarResult
-                        .data['addStar']['starrable']['viewerHasStarred'];
-                  }
-
-                  return ListTile(
-                    leading: (repository['viewerHasStarred'] as bool)
-                        ? const Icon(Icons.star, color: Colors.amber)
-                        : const Icon(Icons.star_border),
-                    title: Text(repository['name'] as String),
-                    // optimistic ui updates are not implemented yet, therefore changes may take some time to show
-                    onTap: () {
-                      addStar(<String, dynamic>{
-                        'starrableId': repository['id'],
-                      });
-                    },
-                  );
-                },
-                onCompleted: (QueryResult onCompleteResult) {
-                  showDialog<AlertDialog>(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return AlertDialog(
-                        title: Text('Thanks for your star!'),
-                        actions: <Widget>[
-                          SimpleDialogOption(
-                            child: Text('Dismiss'),
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                            },
-                          )
-                        ],
-                      );
-                    },
-                  );
-                },
-              );
-            },
-          );
+          return Container();
         },
       ),
     );
