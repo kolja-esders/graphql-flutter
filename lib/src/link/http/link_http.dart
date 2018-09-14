@@ -197,7 +197,7 @@ FetchResult _parseResponse(Response response) {
     );
   }
 
-  final Map<String, dynamic> jsonResponse = json.decode(response.body);
+  final Map<String, dynamic> jsonResponse = json.decode(utf8.decode(response.bodyBytes));
   final FetchResult fetchResult = FetchResult();
 
   if (jsonResponse['errors'] != null) {
