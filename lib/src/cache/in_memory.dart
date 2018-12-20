@@ -77,29 +77,22 @@ class InMemoryCache implements Cache {
       if (file.existsSync()) {
         final Stream<List<int>> inputStream = file.openRead();
 
-        inputStream
-            .transform(utf8.decoder) // Decode bytes to UTF8.
-            .transform(
-              const LineSplitter(),
-            ) // Convert stream to individual lines.
-            .listen((String line) {
+        var lines = inputStream
+            .transform(utf8.decoder)
+            .transform(const LineSplitter());
+        await for (var line in lines) {
           final List<dynamic> keyAndValue = json.decode(line);
-
           storedHashMap[keyAndValue[0]] = keyAndValue[1];
-        });
+        }
+        return storedHashMap;
       }
-
-      return storedHashMap;
     } on FileSystemException {
       // TODO: handle no such file
       print('Can\'t read file from storage, returning an empty HashMap.');
-
-      return HashMap<String, dynamic>();
     } catch (error) {
       // TODO: handle error
       print(error);
-
-      return HashMap<String, dynamic>();
     }
+    return HashMap<String, dynamic>();
   }
 }
