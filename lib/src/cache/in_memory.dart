@@ -34,7 +34,7 @@ class InMemoryCache implements Cache {
 
   /// Restores the internal HashMap to a file.
   @override
-  void restore() async {
+  Future<void> restore() async {
     _inMemoryCache = await _readFromStorage();
   }
 

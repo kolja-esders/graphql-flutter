@@ -6,6 +6,6 @@ abstract class Cache {
   ) {}
 
   void save() {}
-  void restore() {}
+  Future<void> restore() { return Future<void>.value(null); }
   void reset() {}
 }
